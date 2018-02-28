@@ -1,0 +1,37 @@
+{
+  "name": "buttbot",
+  "version": "1.0.0",
+  "description": "buttbot!!!",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dqbert/buttbot.git"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "buttbot"
+  ],
+  "author": "dqbert@hotmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dqbert/buttbot/issues"
+  },
+  "homepage": "https://github.com/dqbert/buttbot#readme",
+  "dependencies": {
+    "bufferutil": "^3.0.3",
+    "discord.js": "^11.3.0",
+    "erlpack": "github:discordapp/erlpack",
+    "libsodium-wrappers": "^0.5.4",
+    "node-opus": "^0.2.7",
+    "opusscript": "0.0.6",
+    "sodium": "^2.0.3",
+    "uws": "^9.14.0"
+  }
+}

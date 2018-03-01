@@ -1,26 +1,13 @@
-add suggest command
-add admin command interface
-add purge command
-add suggest command
-suffix command with subcommand change/modify/set (no subcommand = show current)
-admin command restriction (allow for any command to be made admin-only or non-admin-only)
+change prefix
 polls
 voice channel commands
 create text channels
 create/edit/delete roles
-change prefix
-notify when new commands are added only once
-use reactions as buttons
 make edit embeds correctly mention
-maybe embed the edit to a user's message somehow
-keyword to embed an old message
-admin commands
 notification words
-post leaderboard
-count posts from the past
-allow toggle between edited message and original message
-/say command
-don't edit messages with URLs
 server IP storage for game based groups
 text to speech keywords
-find a real way to toggle embeds
+make all possible commands async
+coin system
+coins get changed via games, posting, etc
+make embed toggle happen within the embed, not an edit to the message

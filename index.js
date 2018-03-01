@@ -43,75 +43,25 @@ var configs = {};
 //JSON object holding all edited messages and their originals
 var edit_swap = {};
 
-exports.guild_print = function(guild)
+var guild_print = function(guild)
 {
     return util.format("[%s]: %s", guild.id, guild.name);
 }
 
-//create admin role for a guild if required
-exports.guild_create_admin = function(message) {
-    var returns = true;
-    var guild = message.guild;
-    if (typeof(configs[guild.id]) === "undefined") {
-        logging.log("Error creating admin role for guild! Config not found.");
-        return false;
-    }
-
-    //need to create role in the guild itself
-    if (!guild.roles.has(configs[guild.id].admin_role)) {
-        guild.createRole({
-            name: "Buttbot",
-            color: [139,69,19],
-            managed: true
-        })
-        .catch(err => {
-            message.channel.send("Error creating admin role for guild! Make sure I can modify roles before attempting to use my admin-only commands (an admin role is required!)");
-            logging.err(err);
-            returns = false;
-        })
-        .then(role => {
-            role.setPermissions(['KICK_MEMBERS',
-            'BAN_MEMBERS',
-            'MANAGE_MESSAGES',
-            'CONNECT',
-            'SPEAK',
-            'MUTE_MEMBERS',
-            'DEAFEN_MEMBERS',
-            'MOVE_MEMBERS',
-            'CHANGE_NICKNAME',
-            'MANAGE_NICKNAMES',
-            'MANAGE_ROLES',
-            'MANAGE_WEBHOOKS'])
-            .catch(err => {
-                message.channel.send("Error updating permissions for new admin role! I need to be able to update roles!");
-                logging.err(err);
-                returns = false;
-            })
-            .then(role => {
-                //it all worked, store the admin role
-                configs[guild.id].admin_role = role;
-
-            })
-        });
-    }
-
-    return returns;
-}
-
-exports.guild_cfg_update = function(guild) {
+var guild_cfg_update = function(guild) {
     var returns = true;
     var updated = false;
 
     //check if guild config exists before saving it
     if (!configs.hasOwnProperty(guild.id)) {
         logging.log("Can't update config for guild:");
-        logging.log(exports.guild_print(guild));
+        logging.log(guild_print(guild));
         logging.log("Guild config doesn't exist in array!");
         return false;
     }
 
     //save old cfg in case of error
-    var old_cfg = configs[guild.id];
+    var guild_cfg = configs[guild.id];
 
     //exists, so update it
     for (var key in guild_init.guild_default) {
@@ -126,15 +76,15 @@ exports.guild_cfg_update = function(guild) {
     if (updated) {
         try {
             logging.log("Updating local config for guild: ");
-            logging.log(exports.guild_print(guild));
-            fs.writeFileSync(guild_cfg, JSON.stringify(configs[guild.id]), {flag: 'w'});
+            logging.log(guild_print(guild));
+            fs.writeFileSync(path.resolve(GUILD_PATH, guild.id, "config.json"), JSON.stringify(configs[guild.id]), {flag: 'w'});
         }
         catch (err) {
             logging.log("Error updating guild config for: ");
-            logging.log(exports.guild_print(guild));
+            logging.log(guild_print(guild));
             logging.err(err);
             //restore old cfg because of error
-            configs[guild.id] = old_cfg;
+            configs[guild.id] = guild_cfg;
             returns = false;
         }
     }
@@ -146,14 +96,14 @@ exports.guild_cfg_update = function(guild) {
 var guild_read_cfg = function(guild)
 {
     logging.log("Handling config for guild: ");
-    logging.log(exports.guild_print(guild));
+    logging.log(guild_print(guild));
     var guild_dir = path.resolve(GUILD_PATH, guild.id);
     var guild_cfg = path.resolve(guild_dir, 'config.json');
     try {
         var guild_read = fs.readFileSync(guild_cfg);
         configs[guild.id] = JSON.parse(guild_read);
 
-        if (!exports.guild_cfg_update(guild)) process.exit(1);
+        if (!guild_cfg_update(guild)) process.exit(1);
     }
     catch (err) {
         var cfg_obj = guild_init.start_guild();
@@ -183,7 +133,7 @@ var guild_read_cfg = function(guild)
 var guild_del_cfg = function(guild)
 {
     logging.log("Deleting guild from configs: ");
-    logging.log(exports.guild_print(guild));
+    logging.log(guild_print(guild));
     delete configs[guild.id];
 }
 
@@ -191,12 +141,12 @@ logging.log("Buttbot script started" + os.EOL + '-'.repeat(50) + os.EOL);
 
 //login to discord
 bot.login(config.token).then(() => {
-    logging.log("New buttbot running!");
+    logging.log("Buttbot running!");
 });
 
 //deal with things which can only be done when logged in
 bot.on("ready", () => {
-    logging.log("New buttbot ready!");
+    logging.log("Buttbot ready!");
 
     //read each config for each guild
     logging.log("Reading guild configs");
@@ -206,14 +156,14 @@ bot.on("ready", () => {
 //joined a new guild, read its config
 bot.on("guildCreate", guild => {
     logging.log("Joined new guild: ");
-    logging.log(exports.guild_print(guild));
+    logging.log(guild_print(guild));
     guild_read_cfg(guild);
 });
 
 //left a guild, delete its config to save resources
 bot.on("guildDelete", guild => {
     logging.log("Left a guild: ");
-    logging.log(exports.guild_print(guild));
+    logging.log(guild_print(guild));
     guild_del_cfg(guild);
 });
 
@@ -235,7 +185,7 @@ bot.on("message", message => {
         commands = reload(path.resolve(BOT_PATH, 'commands'));
 
         //process the command
-        commands.process(configs[message.guild.id], message);
+        commands.process(configs[message.guild.id], message, bot);
     }
     //otherwise, check for keywords
     else {
@@ -244,10 +194,28 @@ bot.on("message", message => {
             fs.readFile(path.resolve(GUILD_PATH, message.guild.id, 'keywords.json'), (err, data) => {
 
                 if (data == null) return;
+                var color = 'DEFAULT';
+                var display_name = '';
+                var display_url = '';
 
+                if (message.member != null) {
+                    if (message.member.displayColor != null) {
+                        color = message.member.displayColor;
+                    }
+
+                    if (message.member.displayName != null) {
+                        display_name = message.member.displayName;
+                    }
+
+                    if (message.member.displayAvatarURL != null) {
+                        display_url = message.member.displayAvatarURL;
+                    }
+                }
+
+                if (message.member)
                 var embed = new discord.RichEmbed()
-                    .setColor(message.member.displayColor)
-                    .setAuthor(message.member.displayName, message.member.user.displayAvatarURL);
+                    .setColor(color)
+                    .setAuthor(display_name, display_url);
 
                 var edit_message = "";
                 var delete_message = false;

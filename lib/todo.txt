@@ -1,13 +1,18 @@
-change prefix
 polls
 voice channel commands
 create text channels
-create/edit/delete roles
 make edit embeds correctly mention
-notification words
-server IP storage for game based groups
 text to speech keywords
-make all possible commands async
+create/edit/delete roles
 coin system
 coins get changed via games, posting, etc
 make embed toggle happen within the embed, not an edit to the message
+make edit embeds correctly mention
+convert edit_swap into json object file
+randomize message command
+randomize words in message command
+translate message command
+cleverbot responses in voice channel
+support DMs (aka non-guilds)
+pin messages
+secret word when listening to voice channel

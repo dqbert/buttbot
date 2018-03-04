@@ -58,3 +58,5 @@ typings/
 .env
 
 guilds/
+dailyword.txt
+api_key.json

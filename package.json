@@ -26,11 +26,12 @@
   "homepage": "https://github.com/dqbert/buttbot#readme",
   "dependencies": {
     "bufferutil": "^3.0.3",
-    "discord.js": "^11.3.0",
+    "discord.js": "^11.3.2",
     "erlpack": "github:discordapp/erlpack",
     "libsodium-wrappers": "^0.5.4",
     "node-opus": "^0.2.7",
     "opusscript": "0.0.6",
+    "random-words": "^1.0.0",
     "sodium": "^2.0.3",
     "uws": "^9.14.0"
   }

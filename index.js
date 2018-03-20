@@ -128,9 +128,25 @@ bot.on("message", async function(message) {
     //otherwise, check for keywords
     else {
         //get all keywords for this guild
-        var data = await readFile(path.resolve(exports.GUILD_PATH, message.guild.id, 'keywords.json'));
+        var data = null;
+        try {
+            data = await readFile(path.resolve(exports.GUILD_PATH, message.guild.id, 'keywords.json'));
+        }
+        catch (err) {
+            //just doesn't exist, make a new blank one
+            if (err.code === "ENOENT") {
+                data = "";
+                writeFile(path.resolve(exports.GUILD_PATH, message.guild.id, 'keywords.json'), data, {flag: 'w'});
+            }
+            else {
+                //rethrow the error
+                setTimeout(async function() {
+                    throw err;
+                });
+            }
+        }
 
-        if (data == null) return;
+        if (data == null || data == "") return;
 
         var color = 'DEFAULT';
         var display_name = '';
@@ -165,6 +181,7 @@ bot.on("message", async function(message) {
 
             //turn into an object to get the keyword
             line = JSON.parse(line);
+
             var regex = new RegExp(line.keyword, "gi");
             var old_index = 0;
 

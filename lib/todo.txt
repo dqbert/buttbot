@@ -16,3 +16,4 @@ cleverbot responses in voice channel
 support DMs (aka non-guilds)
 pin messages
 secret word when listening to voice channel
+keywords which trigger other buttbot commands

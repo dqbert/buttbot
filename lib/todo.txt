@@ -1,3 +1,5 @@
+suggestions which come from a guild now say what guild and user created the suggestion
+console command to provide diagnostics for guild (does it have admin role, what are admin commands, what are keywords, etc)
 polls
 voice channel commands
 create text channels

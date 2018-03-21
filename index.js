@@ -18,51 +18,43 @@ const mkdir = util.promisify(fs.mkdir);
 
 //stuff to export to sub-modules
 exports.BOT_PATH = path.resolve('./lib/');
-exports.GUILD_PATH = path.resolve('guilds/'),
-exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js')),
-exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js')),
-exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'))
+exports.GUILD_PATH = path.resolve('guilds/');
+exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js'));
+exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
+exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
+exports.bot = new discord.Client();
 
 const GLOB_CONFIG = reload(path.resolve(exports.BOT_PATH, 'config.json'));
 const API_KEY = reload(path.resolve(exports.BOT_PATH, 'api_key.json'));
 var commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
 var con_commands = reload(path.resolve(exports.BOT_PATH, 'console_commands'));
 
-//bot client
-var bot = new discord.Client();
-
 //JSON object holding all edited messages and their originals
 var edit_swap = {};
-
-var guild_print = async function(guild)
-{
-    assert.ok(guild instanceof discord.Guild);
-    return util.format("[%s]: %s", guild.id, guild.name);
-}
 
 exports.logging.log("Buttbot script started" + os.EOL + '-'.repeat(50) + os.EOL);
 
 //login to discord
-bot.login(API_KEY.token).then(async function() {
+exports.bot.login(API_KEY.token).then(async function() {
     exports.logging.log("Buttbot running!");
 });
 
 //deal with things which can only be done when logged in
-bot.on("ready", async function() {
+exports.bot.on("ready", async function() {
     exports.logging.log("Buttbot ready!");
 
 });
 
 //joined a new guild
-bot.on("guildCreate", async function(guild) {
+exports.bot.on("guildCreate", async function(guild) {
 });
 
 //left a guild
-bot.on("guildDelete", async function(guild) {
+exports.bot.on("guildDelete", async function(guild) {
 });
 
 //handle incoming messages
-bot.on("message", async function(message) {
+exports.bot.on("message", async function(message) {
     var guild_cfg = await exports.config.guild.get(message.guild);
     var init_word;
     var daily_word;
@@ -117,12 +109,12 @@ bot.on("message", async function(message) {
 
     //if a message has the prefix, then it's a command (so don't mess with it)
     if (content.match(new RegExp('^' + guild_cfg.prefix, 'g')) ||
-        content.match(new RegExp('\<\@' + bot.user.id + '\> ', 'g'))) {
+        content.match(new RegExp('\<\@' + exports.bot.user.id + '\> ', 'g'))) {
         //reload commands in case of updates
         commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
 
         //process the command
-        commands.process(message, bot);
+        commands.process(message);
     }
 
     //otherwise, check for keywords
@@ -219,7 +211,7 @@ bot.on("message", async function(message) {
 
             //watch this message to allow for reaction toggle
             message_edited.awaitReactions(async function(reaction, user) {
-                if (reaction.emoji.name != "🔁" || user.id == bot.user.id) return;
+                if (reaction.emoji.name != "🔁" || user.id == exports.bot.user.id) return;
                 reaction.remove(user);
 
                 if (message_edited.content == "") {
@@ -238,7 +230,7 @@ bot.on("message", async function(message) {
 });
 
 //handle warnings
-bot.on("warn", async function(warning) {
+exports.bot.on("warn", async function(warning) {
     exports.logging.log("Warning received: " + warning);
 });
 
@@ -266,6 +258,6 @@ process.on("unhandledRejection", async function(err) {
 });
 
 process.on("exit", function(rc) {
-    bot.destroy();
+    exports.bot.destroy();
     exports.logging.log("Exiting with RC " + rc);
 });

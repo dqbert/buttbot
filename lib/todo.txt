@@ -1,5 +1,8 @@
-suggestions which come from a guild now say what guild and user created the suggestion
-console command to provide diagnostics for guild (does it have admin role, what are admin commands, what are keywords, etc)
+guild console command for usage statistics
+fix pending suggestions referencing buttbot as user
+console command to list keywords for guilds
+console command to list admin commands for a guild
+console command to list config for guilds
 polls
 voice channel commands
 create text channels
@@ -15,7 +18,9 @@ randomize message command
 randomize words in message command
 translate message command
 cleverbot responses in voice channel
-support DMs (aka non-guilds)
 pin messages
 secret word when listening to voice channel
 keywords which trigger other buttbot commands
+github update notifications
+default "sending channel" for unsolicited buttbot messages
+config reset command

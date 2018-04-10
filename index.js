@@ -17,12 +17,17 @@ const writeFile = util.promisify(fs.writeFile);
 const mkdir = util.promisify(fs.mkdir);
 
 //stuff to export to sub-modules
+exports.bot = new discord.Client();
 exports.BOT_PATH = path.resolve('./lib/');
 exports.GUILD_PATH = path.resolve('guilds/');
 exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js'));
 exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
 exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
-exports.bot = new discord.Client();
+
+//redefine the exported modules so they are all inter-defined
+exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js'));
+exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
+exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
 
 const GLOB_CONFIG = reload(path.resolve(exports.BOT_PATH, 'config.json'));
 const API_KEY = reload(path.resolve(exports.BOT_PATH, 'api_key.json'));
@@ -55,7 +60,7 @@ exports.bot.on("guildDelete", async function(guild) {
 
 //handle incoming messages
 exports.bot.on("message", async function(message) {
-    var guild_cfg = await exports.config.guild.get(message.guild);
+    var guild_cfg = await exports.config.guild.get(message.channel);
     var init_word;
     var daily_word;
     try {
@@ -110,6 +115,9 @@ exports.bot.on("message", async function(message) {
     //if a message has the prefix, then it's a command (so don't mess with it)
     if (content.match(new RegExp('^' + guild_cfg.prefix, 'g')) ||
         content.match(new RegExp('\<\@' + exports.bot.user.id + '\> ', 'g'))) {
+        //log command in usage stats
+        exports.logging.use_log(message);
+
         //reload commands in case of updates
         commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
 
@@ -122,13 +130,13 @@ exports.bot.on("message", async function(message) {
         //get all keywords for this guild
         var data = null;
         try {
-            data = await readFile(path.resolve(exports.GUILD_PATH, message.guild.id, 'keywords.json'));
+            data = await readFile(path.resolve(exports.GUILD_PATH, exports.config.guild.cfg_path(message.channel), 'keywords.json'));
         }
         catch (err) {
             //just doesn't exist, make a new blank one
             if (err.code === "ENOENT") {
                 data = "";
-                writeFile(path.resolve(exports.GUILD_PATH, message.guild.id, 'keywords.json'), data, {flag: 'w'});
+                writeFile(path.resolve(exports.GUILD_PATH, exports.config.guild.cfg_path(message.channel), 'keywords.json'), data, {flag: 'w'});
             }
             else {
                 //rethrow the error
@@ -203,25 +211,34 @@ exports.bot.on("message", async function(message) {
 
         if (edit_message != "") {
             embed.setDescription(edit_message);
-            var sent_message = await exports.messaging.send_embed(embed, message.channel);
+            var message_edited = await exports.messaging.send_embed(embed, message.channel);
 
             edit_swap[message_edited.id] = message.content;
             //react so others can add to the reaction
-            sent_message.react("🔁");
+            try {
+                message_edited.react("🔁");
 
-            //watch this message to allow for reaction toggle
-            message_edited.awaitReactions(async function(reaction, user) {
-                if (reaction.emoji.name != "🔁" || user.id == exports.bot.user.id) return;
-                reaction.remove(user);
+                //watch this message to allow for reaction toggle
+                message_edited.awaitReactions(async function(reaction, user) {
+                    if (reaction.emoji.name != "🔁" || user.id == exports.bot.user.id) return;
+                    reaction.remove(user);
 
-                if (message_edited.content == "") {
-                    message_edited = await message_edited.edit(edit_swap[message_edited.id]);
-                }
-                else {
-                    message_edited = await message_edited.edit("");
-                }
+                    if (message_edited.content == "") {
+                        message_edited = await message_edited.edit(edit_swap[message_edited.id]);
+                    }
+                    else {
+                        message_edited = await message_edited.edit("");
+                    }
 
-            });
+                });
+
+            }
+            catch (err) {
+                logging.log("Couldn't react to an edit message!");
+                setTimeout(async function() {
+                    throw err;
+                });
+            }
         }
         if (delete_message) {
             exports.messaging.delete(message);

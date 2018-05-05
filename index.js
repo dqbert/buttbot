@@ -89,8 +89,15 @@ exports.bot.on("message", async function(message) {
 
     if (init_word) {
         init_word = true;
+        daily_word = random_words();
+
+        //ensure longer than length 3
+        while (daily_word.length < 4) {
+            daily_word = random_words();
+        }
+
         daily_word = {
-            word : random_words(),
+            word : daily_word,
             time : Math.floor(Date.now()/1000)
         };
         try {
@@ -103,13 +110,14 @@ exports.bot.on("message", async function(message) {
 
     //check if message has word of the day for a surprise!!
     if (content.match(new RegExp('\\b' + daily_word.word + '\\b', 'gi'))) {
-        exports.messaging.send("AHHHHHHHHHHHHHHHHHHHHHHHH" + os.EOL +
+        //todo: make this turned off by default, need config to turn it on
+        /*exports.messaging.send("AHHHHHHHHHHHHHHHHHHHHHHHH" + os.EOL +
            "AHHHHHHHHHHHHHHHHHHHHHHHH" + os.EOL +
-           "<@" + message.author.id + "> said " + daily_word.word +
-           ", today's secret word!" + os.EOL +
+           "<@" + message.author.id + "> said **" + daily_word.word +
+           "**, today's secret word!" + os.EOL +
            "AHHHHHHHHHHHHHHHHHHHHHHHH" + os.EOL +
            "im dumb as hell btw" + os.EOL +
-           "https://gph.is/1kxKd90", message.channel);
+           "https://gph.is/1kxKd90", message.channel);*/
     }
 
     //if a message has the prefix, then it's a command (so don't mess with it)

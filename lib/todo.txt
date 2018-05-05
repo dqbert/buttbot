@@ -1,5 +1,4 @@
 guild console command for usage statistics
-fix pending suggestions referencing buttbot as user
 console command to list keywords for guilds
 console command to list admin commands for a guild
 console command to list config for guilds
@@ -24,3 +23,5 @@ keywords which trigger other buttbot commands
 github update notifications
 default "sending channel" for unsolicited buttbot messages
 config reset command
+examples of commands and interactive help
+bot impersonate

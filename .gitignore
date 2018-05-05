@@ -60,3 +60,4 @@ typings/
 guilds/
 dailyword.txt
 api_key.json
+.sonarlint

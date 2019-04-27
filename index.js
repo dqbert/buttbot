@@ -20,22 +20,44 @@ const mkdir = util.promisify(fs.mkdir);
 exports.bot = new discord.Client();
 exports.BOT_PATH = path.resolve('./lib/');
 exports.GUILD_PATH = path.resolve('guilds/');
+const API_KEY = reload(path.resolve(exports.BOT_PATH, 'api_key.json'));
+exports.API_KEY = API_KEY;
 exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js'));
 exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
 exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
+exports.sql = reload(path.resolve(exports.BOT_PATH, 'sql.js'));
 
 //redefine the exported modules so they are all inter-defined
 exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js'));
 exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
 exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
+//exports.sql = reload(path.resolve(exports.BOT_PATH, 'sql.js'));
+exports.receivers = new Map();
 
 const GLOB_CONFIG = reload(path.resolve(exports.BOT_PATH, 'config.json'));
-const API_KEY = reload(path.resolve(exports.BOT_PATH, 'api_key.json'));
 var commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
 var con_commands = reload(path.resolve(exports.BOT_PATH, 'console_commands'));
 
 //JSON object holding all edited messages and their originals
 var edit_swap = {};
+
+//load all new guilds that were missed since last startup
+var find_guilds = async function(message) {
+    var waiting_promises = [];
+    var key_array = exports.bot.guilds.keyArray();
+
+    exports.logging.log("Registering any new guilds...");
+    for (var key in key_array) {
+        var guild = exports.bot.guilds.get(key_array[key]);
+        var result = await exports.sql.guild.get(guild.id)
+        if (result === null) {
+            exports.logging.log(`Found a new guild to register: ${guild.id}`);
+            waiting_promises.push(exports.logging.register(message));
+        }
+    }
+
+    await Promise.all(waiting_promises);
+}
 
 exports.logging.log("Buttbot script started" + os.EOL + '-'.repeat(50) + os.EOL);
 
@@ -47,11 +69,11 @@ exports.bot.login(API_KEY.token).then(async function() {
 //deal with things which can only be done when logged in
 exports.bot.on("ready", async function() {
     exports.logging.log("Buttbot ready!");
-
 });
 
 //joined a new guild
 exports.bot.on("guildCreate", async function(guild) {
+    exports.logging.log(`Joined a guild ${guild.name} [${guild.id}]`);
 });
 
 //left a guild
@@ -60,68 +82,28 @@ exports.bot.on("guildDelete", async function(guild) {
 
 //handle incoming messages
 exports.bot.on("message", async function(message) {
-    var guild_cfg = await exports.config.guild.get(message.channel);
-    var init_word;
-    var daily_word;
-    try {
-        //remove extra whitespace
-        var content = message.content.trim();
+    var guild = exports.config.guild.fromChannel(message.channel);
+    var content = message.content;
 
-        //don't handle empty string input
-        //or messages sent by a bot
-        if (content.length < 1 || message.author.bot) return;
-
-        //try to get the word of the day
-        daily_word = JSON.parse(await readFile(path.resolve(exports.BOT_PATH, "dailyword.txt")));
-        init_word = false;
-
-        //not found, make a new one (trigger catch to set init_word to true)
-        if (daily_word == null) throw new Error("No word found, making a new one");
-
-        //time > 24 hours since last word, make a new done
-        if (Math.floor(Date.now()/1000) - daily_word.time > 60*60*24) throw new Error("It's time for a new word: " + daily_word.word);
-
-    }
-    catch (err) {
-        init_word = true;
-        exports.logging.log(err.message);
+    if (message.author.bot === true || message.author === exports.bot.user) {
+        return;
     }
 
-    if (init_word) {
-        init_word = true;
-        daily_word = random_words();
-
-        //ensure longer than length 3
-        while (daily_word.length < 4) {
-            daily_word = random_words();
-        }
-
-        daily_word = {
-            word : daily_word,
-            time : Math.floor(Date.now()/1000)
-        };
-        try {
-            writeFile(path.resolve(exports.BOT_PATH, "dailyword.txt"), JSON.stringify(daily_word), {flag: 'w'});
-        }
-        catch (err) {
-            exports.logging.err(err);
-        }
+    //check that we have registered this guild
+    var guild_check = await exports.sql.guild.get(guild.id);
+    if (guild_check === null) {
+        await find_guilds(message);
     }
 
-    //check if message has word of the day for a surprise!!
-    if (content.match(new RegExp('\\b' + daily_word.word + '\\b', 'gi'))) {
-        //todo: make this turned off by default, need config to turn it on
-        /*exports.messaging.send("AHHHHHHHHHHHHHHHHHHHHHHHH" + os.EOL +
-           "AHHHHHHHHHHHHHHHHHHHHHHHH" + os.EOL +
-           "<@" + message.author.id + "> said **" + daily_word.word +
-           "**, today's secret word!" + os.EOL +
-           "AHHHHHHHHHHHHHHHHHHHHHHHH" + os.EOL +
-           "im dumb as hell btw" + os.EOL +
-           "https://gph.is/1kxKd90", message.channel);*/
+    var guild_check = await exports.sql.guild.compare_commands(guild.id);
+    if (guild_check === false) {
+        await exports.sql.command.sync(guild.id);
     }
+
+    var guild_prefix = await exports.sql.guild.get_prefix(guild.id);
 
     //if a message has the prefix, then it's a command (so don't mess with it)
-    if (content.match(new RegExp('^' + guild_cfg.prefix, 'g')) ||
+    if (content.match(new RegExp('^' + guild_prefix, 'g')) ||
         content.match(new RegExp('\<\@' + exports.bot.user.id + '\> ', 'g'))) {
         //log command in usage stats
         exports.logging.use_log(message);
@@ -135,26 +117,11 @@ exports.bot.on("message", async function(message) {
 
     //otherwise, check for keywords
     else {
-        //get all keywords for this guild
-        var data = null;
-        try {
-            data = await readFile(path.resolve(exports.GUILD_PATH, exports.config.guild.cfg_path(message.channel), 'keywords.json'));
-        }
-        catch (err) {
-            //just doesn't exist, make a new blank one
-            if (err.code === "ENOENT") {
-                data = "";
-                writeFile(path.resolve(exports.GUILD_PATH, exports.config.guild.cfg_path(message.channel), 'keywords.json'), data, {flag: 'w'});
-            }
-            else {
-                //rethrow the error
-                setTimeout(async function() {
-                    throw err;
-                });
-            }
-        }
+        var keywords = await exports.sql.keyword.get.by_message(message);
 
-        if (data == null || data == "") return;
+        if (keywords === null || keywords === undefined || keywords.length === 0) {
+            return;
+        }
 
         var color = 'DEFAULT';
         var display_name = '';
@@ -181,42 +148,42 @@ exports.bot.on("message", async function(message) {
 
         var edit_message = "";
         var delete_message = false;
+        var send_message = "";
 
         //split based on records
-        data.toString().split(os.EOL).forEach(line => {
+        keywords.forEach(keyword => {
 
-            if (line == "" || line == null) return;
-
-            //turn into an object to get the keyword
-            line = JSON.parse(line);
-
-            var regex = new RegExp(line.keyword, "gi");
-            var old_index = 0;
+            var regex = new RegExp(keyword.keyword, "gi");
 
             //find keyword in the message
             if (message.content.match(regex)) {
 
-                //these subparms require normal message sending
-                if ((line.subparm == "keep" || line.subparm == "notify" || line.subparm == "delete") && line.after_text != null && line.after_text != "") {
-                    exports.messaging.send(line.after_text, message.channel);
+                //these keyword_types require normal message sending
+                if ((keyword.keyword_type == "keep" || keyword.keyword_type == "notify" || keyword.keyword_type == "delete") && keyword.keyword_text != null && keyword.keyword_text != "") {
+                    send_message = send_message + keyword.keyword_text + os.EOL;
                 }
 
-                //this subparm requires a specially formatted embed to send
-                if (line.subparm == "edit") {
+                //this keyword_type requires a specially formatted embed to send
+                if (keyword.keyword_type == "edit") {
                     if (edit_message == "") {
                         edit_message = message.content;
                     }
-                    edit_message = edit_message.replace(regex, line.after_text);
+                    edit_message = edit_message.replace(regex, keyword.keyword_text);
                 }
 
-                //these subparms require deletion of message
+                //these keyword_types require deletion of message
                 //don't delete a message with a URL in it
-                if ((line.subparm == "delete" || line.subparm == "edit") && !message.content.match(new RegExp("http.?:", "gi"))) {
+                if ((keyword.keyword_type == "delete" || keyword.keyword_type == "edit") &&
+                     !message.content.match(new RegExp("http.?:", "gi")) &&
+                     message.attachments.size === 0) {
                     delete_message = true;
                 }
             }
         });
 
+        if (send_message !== "") {
+            exports.messaging.send(send_message, message.channel, message.author, message);
+        }
         if (edit_message != "") {
             embed.setDescription(edit_message);
             var message_edited = await exports.messaging.send_embed(embed, message.channel);

@@ -60,3 +60,10 @@ typings/
 guilds/
 dailyword.txt
 api_key.json
+.sonarlint
+buttbot model.mwb
+buttbot model.mwb.bak
+database architecture.txt
+import_config.js
+sql presets/
+test_sql.js

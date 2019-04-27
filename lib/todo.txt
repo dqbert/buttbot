@@ -1,18 +1,35 @@
-polls
+remake aliases of commands
+finish changing how commands work
+expiring messages command
+put subcommands in their own modules to check for admin
+keyword to do a command
+role owner system
+buttbot central message repo (to change them all at once)
+keyword for command printf style replace chars
+cross server messaging
+redo logging channel
+allow logging channel to be configured what updates to receive
+log github updates
+log users join/leave
+log buttbot admin role updates
+implement speech-to-text, npm say, and cleverbot.io
 voice channel commands
-create text channels
+cleverbot responses in voice channel
+secret word toggle in config
+secret word when listening to voice channel
+polls
+todo done command
+create buttbot managed text and voice channels for managed roles
 make edit embeds correctly mention
 text to speech keywords
 create/edit/delete roles
-coin system
-coins get changed via games, posting, etc
 make embed toggle happen within the embed, not an edit to the message
-make edit embeds correctly mention
 convert edit_swap into json object file
 randomize message command
 randomize words in message command
 translate message command
-cleverbot responses in voice channel
-support DMs (aka non-guilds)
 pin messages
-secret word when listening to voice channel
+see if i can listen to users individually rather than all at once
+examples of commands and interactive help
+random generator (number, dice, etc)
+create a web interface

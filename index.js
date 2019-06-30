@@ -26,12 +26,14 @@ exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js'));
 exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
 exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
 exports.sql = reload(path.resolve(exports.BOT_PATH, 'sql.js'));
+exports.rest = reload(path.resolve(exports.BOT_PATH, 'rest.js'));
 
 //redefine the exported modules so they are all inter-defined
 exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js'));
 exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
 exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
 //exports.sql = reload(path.resolve(exports.BOT_PATH, 'sql.js'));
+exports.rest = reload(path.resolve(exports.BOT_PATH, 'rest.js'));
 exports.receivers = new Map();
 
 const GLOB_CONFIG = reload(path.resolve(exports.BOT_PATH, 'config.json'));

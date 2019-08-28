@@ -27,6 +27,7 @@ exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
 exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
 exports.sql = reload(path.resolve(exports.BOT_PATH, 'sql.js'));
 exports.rest = reload(path.resolve(exports.BOT_PATH, 'rest.js'));
+exports.commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
 
 //redefine the exported modules so they are all inter-defined
 exports.logging = reload(path.resolve(exports.BOT_PATH, 'logging.js'));
@@ -34,10 +35,10 @@ exports.messaging = reload(path.resolve(exports.BOT_PATH, 'messaging.js'));
 exports.config = reload(path.resolve(exports.BOT_PATH, 'config.js'));
 //exports.sql = reload(path.resolve(exports.BOT_PATH, 'sql.js'));
 exports.rest = reload(path.resolve(exports.BOT_PATH, 'rest.js'));
+exports.commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
 exports.receivers = new Map();
 
 const GLOB_CONFIG = reload(path.resolve(exports.BOT_PATH, 'config.json'));
-var commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
 var con_commands = reload(path.resolve(exports.BOT_PATH, 'console_commands'));
 
 //JSON object holding all edited messages and their originals
@@ -111,10 +112,10 @@ exports.bot.on("message", async function(message) {
         exports.logging.use_log(message);
 
         //reload commands in case of updates
-        commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
+        exports.commands = reload(path.resolve(exports.BOT_PATH, 'commands'));
 
         //process the command
-        commands.process(message);
+        exports.commands.process(message);
     }
 
     //otherwise, check for keywords

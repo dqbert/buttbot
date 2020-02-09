@@ -107,7 +107,7 @@ exports.bot.on("message", async function(message) {
 
     //if a message has the prefix, then it's a command (so don't mess with it)
     if (content.match(new RegExp('^' + guild_prefix, 'g')) ||
-        content.match(new RegExp('\<\@' + exports.bot.user.id + '\> ', 'g'))) {
+        content.match(new RegExp('\<\@\!' + exports.bot.user.id + '\> ', 'g'))) {
         //log command in usage stats
         exports.logging.use_log(message);
 

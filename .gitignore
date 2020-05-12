@@ -33,6 +33,8 @@ bower_components
 build/Release
 
 # Dependency directories
+.idea/
+.vscode/
 node_modules/
 jspm_packages/
 
@@ -67,3 +69,5 @@ database architecture.txt
 import_config.js
 sql presets/
 test_sql.js
+dist/
+test.ts

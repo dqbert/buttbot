@@ -1,45 +1,68 @@
 {
-  "name": "buttbot",
-  "version": "1.4.0",
-  "description": "buttbot!!!",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dqbert/buttbot.git"
-  },
-  "keywords": [
-    "discord",
-    "bot",
-    "buttbot"
-  ],
-  "author": "dqbert@hotmail.com",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/dqbert/buttbot/issues"
-  },
-  "homepage": "https://github.com/dqbert/buttbot#readme",
-  "dependencies": {
-    "@discordjs/uws": "^11.149.1",
-    "axios": "^0.19.0",
-    "bufferutil": "^3.0.5",
-    "dblapi.js": "^2.3.0",
-    "discord.js": "^11.5.1",
-    "erlpack": "github:discordapp/erlpack",
-    "ffmpeg": "0.0.4",
-    "libsodium-wrappers": "^0.7.6",
-    "mysql": "^2.17.1",
-    "node-opus": "^0.2.9",
-    "opusscript": "0.0.6",
-    "pad": "^3.2.0",
-    "random-words": "^1.1.0",
-    "require-reload": "^0.2.2",
-    "sodium": "^3.0.2",
-    "uws": "^9.148.0"
-  }
+    "name": "buttbot",
+    "version": "1.4.0",
+    "description": "buttbot!!!",
+    "main": "index.js",
+    "directories": {
+        "lib": "src/lib"
+    },
+    "devDependencies": {
+        "@types/mysql": "^2.15.9",
+        "@types/node": "^13.11.0",
+        "@types/mongodb": "^3.5.6",
+        "@types/mongoose": "^5.7.12",
+        "source-map-support": "^0.5.16",
+        "typescript": "^3.7.5"
+    },
+    "scripts": {
+        "start": "node index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dqbert/buttbot.git"
+    },
+    "keywords": [
+        "discord",
+        "bot",
+        "buttbot"
+    ],
+    "author": "dqbert@hotmail.com",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/dqbert/buttbot/issues"
+    },
+    "homepage": "https://github.com/dqbert/buttbot#readme",
+    "dependencies": {
+        "@discordjs/uws": "^10.149.0",
+        "@typegoose/typegoose": "^6.4.0",
+        "@types/debug": "^4.1.5",
+        "@types/ws": "^7.2.4",
+        "axios": "^0.19.2",
+        "bufferutil": "^3.0.5",
+        "dblapi.js": "^2.4.0",
+        "debug": "^4.1.1",
+        "discord.js": "^12.1.1",
+        "erlpack": "github:discordapp/erlpack",
+        "ffmpeg": "0.0.4",
+        "libsodium-wrappers": "^0.7.6",
+        "module-alias": "^2.2.2",
+        "mongodb": "^3.5.5",
+        "mongoose": "^5.9.9",
+        "mysql": "^2.18.1",
+        "node-opus": "^0.2.9",
+        "opusscript": "0.0.6",
+        "pad": "^3.2.0",
+        "reflect-metadata": "^0.1.13",
+        "sodium": "^3.0.2",
+        "uws": "^9.148.0"
+    },
+    "_moduleAliases": {
+        "@root": ".",
+        "@api_key": "src/api_key.json",
+        "@lib": "dist/lib/",
+        "@entities": "dist/lib/mongodbEntities",
+        "@messageCommands": "dist/lib/messageCommands",
+        "@consoleCommands": "dist/lib/consoleCommands"
+    }
 }

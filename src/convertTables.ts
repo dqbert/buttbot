@@ -255,6 +255,7 @@ async function main()
         }
         newGuildKeyword.userID = guildKeyword.user_id;
         newGuildKeyword.guildID = guildKeyword.guild_id;
+        newGuildKeyword.createHash();
         newGuildKeywords.push(newGuildKeyword);
     });
 

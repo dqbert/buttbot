@@ -12,6 +12,7 @@ import * as MessageUtilities from "@lib/MessageUtilities";
 import "@lib/discordOverrides";
 import { Guild } from "@entities/Guild";
 import { Todo } from "@entities/Todo";
+import { Keyword } from "@entities/Keyword";
 
 logging.log(`Buttbot script started${os.EOL}${'-'.repeat(50)}${os.EOL}`);
 
@@ -117,14 +118,6 @@ typegoose.getModelForClass(Guild).ensureIndexes(err =>
     }
 });
 
-typegoose.getModelForClass(Todo).ensureIndexes(err =>
-{
-    if (err)
-    {
-        logging.error("Got error with Todo ensureIndexes", err);
-    }
-});
-
 typegoose.getModelForClass(Guild).on('index', err =>
 {
     if (err)
@@ -133,10 +126,34 @@ typegoose.getModelForClass(Guild).on('index', err =>
     }
 });
 
-typegoose.getModelForClass(Guild).on('index', err =>
+typegoose.getModelForClass(Todo).ensureIndexes(err =>
+{
+    if (err)
+    {
+        logging.error("Got error with Todo ensureIndexes", err);
+    }
+});
+
+typegoose.getModelForClass(Todo).on('index', err =>
 {
     if (err)
     {
         logging.error("Got error with Todo index", err);
+    }
+});
+
+typegoose.getModelForClass(Keyword).ensureIndexes(err =>
+{
+    if (err)
+    {
+        logging.error("Got error with Keyword ensureIndexes", err);
+    }
+});
+
+typegoose.getModelForClass(Keyword).on('index', err =>
+{
+    if (err)
+    {
+        logging.error("Got error with Keyword index", err);
     }
 });

@@ -105,6 +105,7 @@ View all keywords or keywords which match the optionally specified keyword.`,
         {
             throw new GuildNotFoundError(message.getButtbotGuild().id);
         }
+        keyword.createHash();
 
         try
         {

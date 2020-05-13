@@ -31,10 +31,6 @@ function doSearch<T extends {[key: string]: any}, K extends keyof T>(search: any
     return undefined;
 }
 
-@index({"commands": 1}, {unique: true, partialFilterExpression: { commands: {$gt: {}}}})
-@index({"channels": 1}, {unique: true, partialFilterExpression: { channels: {$gt: {}}}})
-@index({"roles": 1}, {unique: true, partialFilterExpression: { roles: {$gt: {}}}})
-@index({"users": 1}, {unique: true, partialFilterExpression: { users: {$gt: {}}}})
 export class Guild extends MongoDiscordEntity
 {
     @prop({unique: true, required: true, index: true})

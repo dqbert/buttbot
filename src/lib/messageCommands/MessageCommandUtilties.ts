@@ -1,13 +1,13 @@
-import * as discord from "discord.js";
-import * as fs from "fs";
-import * as path from "path";
+import * as discord from "discord.js"
+import * as fs from "fs"
+import * as path from "path"
 
 export class CommandDocumentNotFoundError extends Error
 {
     constructor(message: string)
     {
-        super(message);
-        Object.setPrototypeOf(this, CommandDocumentNotFoundError.prototype);
+        super(message)
+        Object.setPrototypeOf(this, CommandDocumentNotFoundError.prototype)
     }
 }
 
@@ -15,8 +15,8 @@ export class CommandUsageError extends Error
 {
     constructor(message: string)
     {
-        super(message);
-        Object.setPrototypeOf(this, CommandUsageError.prototype);
+        super(message)
+        Object.setPrototypeOf(this, CommandUsageError.prototype)
     }
 }
 
@@ -48,46 +48,46 @@ export enum DiscordPermissionsEnum
 
 export interface IMessageCommandUsage
 {
-    __main__: string;
-    [others: string]: string;
+    __main__: string
+    [others: string]: string
 }
 
 export interface IMessageCommand
 {
-    name: string;
-    parent?: string;
-    description: string;
-    isDefaultAdmin: boolean;
-    cannotBeAdmin?: boolean;
-    isEnabled: boolean;
-    requiresGuild?: boolean;
-    permissions: Array<DiscordPermissionsEnum>;
-    usage: IMessageCommandUsage;
-    process(message: discord.Message): Promise<void>;
+    name: string
+    parent?: string
+    description: string
+    isDefaultAdmin: boolean
+    cannotBeAdmin?: boolean
+    isEnabled: boolean
+    requiresGuild?: boolean
+    permissions: Array<DiscordPermissionsEnum>
+    usage: IMessageCommandUsage
+    process(message: discord.Message): Promise<void>
 }
 
-let tempCommands: Array<IMessageCommand> = [];
+let tempCommands: Array<IMessageCommand> = []
 
-let commandDir = fs.opendirSync(path.resolve("lib/messageCommands/commandFiles"));
-let dirEntry = commandDir.readSync();
+let commandDir = fs.opendirSync(path.resolve("lib/messageCommands/commandFiles"))
+let dirEntry = commandDir.readSync()
 while (dirEntry)
 {
-    let commandPath = path.resolve(commandDir.path, dirEntry.name);
+    let commandPath = path.resolve(commandDir.path, dirEntry.name)
     if (/.*\.js$/gi.test(commandPath))
     {
-        let command: IMessageCommand = require(commandPath).command;
+        let command: IMessageCommand = require(commandPath).command
         if (command)
         {
-            tempCommands.push(command);
+            tempCommands.push(command)
         }
     }
-    dirEntry = commandDir.readSync();
+    dirEntry = commandDir.readSync()
 }
-commandDir.closeSync();
+commandDir.closeSync()
 
-export var commands: Array<IMessageCommand> = tempCommands;
+export var commands: Array<IMessageCommand> = tempCommands
 
 export function findCommand(commandName: string): IMessageCommand | undefined
 {
-    return commands.filter(command => command.name.toLowerCase() == commandName.toLowerCase())[0];
+    return commands.filter(command => command.name.toLowerCase() == commandName.toLowerCase())[0]
 }

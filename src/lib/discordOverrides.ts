@@ -1,32 +1,32 @@
-import * as discord from "discord.js";
-import {Guild, GuildNotFoundError} from "@entities/Guild";
-import * as constants from "@lib/constants";
-import * as typegoose from "@typegoose/typegoose";
+import * as discord from "discord.js"
+import {Guild, GuildNotFoundError} from "@entities/Guild"
+import * as constants from "@lib/constants"
+import * as typegoose from "@typegoose/typegoose"
 
 declare module "discord.js"
 {
     export interface Guild
     {
-        toString(): string;
+        toString(): string
     }
     export interface Client
     {
-        findNewGuilds(message: discord.Message): Promise<void>;
+        findNewGuilds(message: discord.Message): Promise<void>
     }
     export interface Message
     {
-        isBotCommand(): Promise<boolean>;
-        stripBotPrefix(): Promise<string>;
-        getButtbotGuild(): discord.Channel | discord.Guild;
-        getCommandName(): Promise<string>;
+        isBotCommand(): Promise<boolean>
+        stripBotPrefix(): Promise<string>
+        getButtbotGuild(): discord.Channel | discord.Guild
+        getCommandName(): Promise<string>
     }
     export interface User
     {
-        toString(): string;
+        toString(): string
     }
     export interface TextChannel
     {
-        toString(): string;
+        toString(): string
     }
 }
 
@@ -34,25 +34,25 @@ declare global
 {
     export interface String
     {
-        isBotCommand(prefix: string, userID: discord.Snowflake): boolean;
-        stripBotPrefix(prefix: string, userID: discord.Snowflake): string;
-        getCommandName(prefix?: string, userID?: discord.Snowflake): string;
+        isBotCommand(prefix: string, userID: discord.Snowflake): boolean
+        stripBotPrefix(prefix: string, userID: discord.Snowflake): string
+        getCommandName(prefix?: string, userID?: discord.Snowflake): string
     }
 }
 
 discord.Guild.prototype.toString = function()
 {
-    return(`${this.name}<${this.id}>`);
+    return(`${this.name}<${this.id}>`)
 }
 
 discord.Message.prototype.getButtbotGuild = function()
 {
-    let returnValue: discord.DMChannel | discord.TextChannel | discord.NewsChannel | discord.Guild = this.channel;
+    let returnValue: discord.DMChannel | discord.TextChannel | discord.NewsChannel | discord.Guild = this.channel
     if (!(returnValue instanceof discord.DMChannel))
     {
-        returnValue = returnValue.guild;
+        returnValue = returnValue.guild
     }
-    return returnValue;
+    return returnValue
 }
 
 /**
@@ -61,12 +61,12 @@ discord.Message.prototype.getButtbotGuild = function()
  */
 discord.Message.prototype.isBotCommand = async function()
 {
-    let guild = await typegoose.getModelForClass(Guild).findOne({id: this.getButtbotGuild().id});
+    let guild = await typegoose.getModelForClass(Guild).findOne({id: this.getButtbotGuild().id})
     if (!guild)
     {
-        throw new GuildNotFoundError(this.getButtbotGuild().id);
+        throw new GuildNotFoundError(this.getButtbotGuild().id)
     }
-    return this.content.isBotCommand(guild.prefix, constants.bot!.user?.id ?? "");
+    return this.content.isBotCommand(guild.prefix, constants.bot!.user?.id ?? "")
 }
 
 /**
@@ -78,7 +78,7 @@ discord.Message.prototype.isBotCommand = async function()
 String.prototype.isBotCommand = function(prefix: string, userID: discord.Snowflake)
 {
     return new RegExp(`^${prefix}`, 'g').test(this.toString()) ||
-           new RegExp(`^<@!${userID}> `, 'g').test(this.toString());
+           new RegExp(`^<@!${userID}> `, 'g').test(this.toString())
 }
 
 /**
@@ -87,55 +87,55 @@ String.prototype.isBotCommand = function(prefix: string, userID: discord.Snowfla
  */
 discord.Message.prototype.stripBotPrefix = async function()
 {
-    let guild = await typegoose.getModelForClass(Guild).findOne({id: this.getButtbotGuild().id});
+    let guild = await typegoose.getModelForClass(Guild).findOne({id: this.getButtbotGuild().id})
     if (!guild)
     {
-        throw new GuildNotFoundError(this.getButtbotGuild().id);
+        throw new GuildNotFoundError(this.getButtbotGuild().id)
     }
-    return this.content.stripBotPrefix(guild.prefix, constants.bot?.user?.id ?? "");
+    return this.content.stripBotPrefix(guild.prefix, constants.bot?.user?.id ?? "")
 }
 
 String.prototype.stripBotPrefix = function(prefix: string, userID: discord.Snowflake)
 {
     return this.replace(new RegExp(`^${prefix}`, 'g'), '')
-               .replace(new RegExp(`^<@!${userID}> `, 'g'), '');
+               .replace(new RegExp(`^<@!${userID}> `, 'g'), '')
 }
 
 discord.Message.prototype.getCommandName = async function()
 {
-    let noPrefixContent = await this.stripBotPrefix();
-    return noPrefixContent.getCommandName();
+    let noPrefixContent = await this.stripBotPrefix()
+    return noPrefixContent.getCommandName()
 }
 
 String.prototype.getCommandName = function(prefix?: string, userID?: discord.Snowflake)
 {
-    let commandName = "";
-    let content = this;
+    let commandName = ""
+    let content = this
     if (prefix && userID)
     {
-        content = content.stripBotPrefix(prefix, userID);
+        content = content.stripBotPrefix(prefix, userID)
         if (content.isBotCommand(prefix, userID))
         {
-            commandName = content.split(new RegExp("\\s"))[0];
+            commandName = content.split(new RegExp("\\s"))[0]
         }
     }
     else
     {
-        commandName = content.split(new RegExp("\\s"))[0];
+        commandName = content.split(new RegExp("\\s"))[0]
     }
-    return commandName;
+    return commandName
 }
 
 discord.User.prototype.toString = function()
 {
-    return(`${this.username}<@${this.id}>`);
+    return(`${this.username}<@${this.id}>`)
 }
 
 discord.Channel.prototype.toString = function()
 {
     if (this instanceof discord.GuildChannel)
     {
-        return(`${this.name}<#${this.id}> (${this.constructor.name})`);
+        return(`${this.name}<#${this.id}> (${this.constructor.name})`)
     }
-    return(`<#${this.id}>`);
+    return(`<#${this.id}>`)
 }

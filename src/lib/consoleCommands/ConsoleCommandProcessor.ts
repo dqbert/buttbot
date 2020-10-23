@@ -1,5 +1,5 @@
-import * as logging from "@lib/logging";
-import * as IConsoleCommand from "@consoleCommands/ConsoleCommandUtilities";
+import * as logging from "@lib/logging"
+import * as IConsoleCommand from "@consoleCommands/ConsoleCommandUtilities"
 import * as discord from "discord.js"
 
 export async function process(consoleData: string, message?: discord.Message)
@@ -7,18 +7,18 @@ export async function process(consoleData: string, message?: discord.Message)
     if (consoleData)
     {
         // Make the console command show up in the log
-        logging.log(consoleData);
+        logging.log(consoleData)
 
         try
         {
             // Get command name as first entry in consoleData
             // a command is always one word then a space then its args
-            let splitData = consoleData.match(/^(\w+)\s*(\w*)\s*(\w*)/i);
+            let splitData = consoleData.match(/^(\w+)\s*(\w*)\s*(\w*)/i)
             if (!splitData)
             {
-                throw new IConsoleCommand.CommandsError(`Invalid command syntax: ${consoleData}`);
+                throw new IConsoleCommand.CommandsError(`Invalid command syntax: ${consoleData}`)
             }
-            let commandName = splitData[1];
+            let commandName = splitData[1]
 
             // Command exists, process it
             let command = IConsoleCommand.findCommand(commandName)
@@ -28,26 +28,26 @@ export async function process(consoleData: string, message?: discord.Message)
                 {
                     if (splitData[2]?.toLowerCase() == "help")
                     {
-                        throw new IConsoleCommand.CommandUsageError(command.usage.__main__);
+                        throw new IConsoleCommand.CommandUsageError(command.usage.__main__)
                     }
-                    await command.process(consoleData, message);
+                    await command.process(consoleData, message)
                 }
                 catch (error)
                 {
                     if (error instanceof IConsoleCommand.CommandUsageError)
                     {
-                        logging.warn(`Usage: ${error.message}`);
+                        logging.warn(`Usage: ${error.message}`)
                     }
                     else
                     {
-                        throw error;
+                        throw error
                     }
                 }
             }
             // Command does not exist
             else
             {
-                logging.error(`Invalid command: ${commandName}!`);
+                logging.error(`Invalid command: ${commandName}!`)
             }
         }
         catch (error)
@@ -56,16 +56,16 @@ export async function process(consoleData: string, message?: discord.Message)
             {
                 if (error.message)
                 {
-                    logging.error(error.message);
+                    logging.error(error.message)
                 }
                 else
                 {
-                    throw error;
+                    throw error
                 }
             }
             else
             {
-                throw error;
+                throw error
             }
         }
     }

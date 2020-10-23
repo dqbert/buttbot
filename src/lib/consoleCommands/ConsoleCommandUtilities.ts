@@ -1,13 +1,13 @@
-import * as discord from "discord.js";
-import * as fs from "fs";
-import * as path from "path";
+import * as discord from "discord.js"
+import * as fs from "fs"
+import * as path from "path"
 
 export class CommandsError extends Error
 {
     public constructor(message: string)
     {
-        super(message);
-        Object.setPrototypeOf(this, CommandsError.prototype);
+        super(message)
+        Object.setPrototypeOf(this, CommandsError.prototype)
     }
 }
 
@@ -15,49 +15,49 @@ export class CommandUsageError extends Error
 {
     public constructor(message: string)
     {
-        super(message);
-        Object.setPrototypeOf(this, CommandUsageError.prototype);
+        super(message)
+        Object.setPrototypeOf(this, CommandUsageError.prototype)
     }
 }
 
 export interface IConsoleCommandUsage
 {
-    __main__: string;
-    [usage: string]: string;
+    __main__: string
+    [usage: string]: string
 }
 
 export interface IConsoleCommand
 {
-    name: string;
-    parent?: string;
-    description: string;
-    isEnabled: boolean;
-    usage: IConsoleCommandUsage;
-    process(consoleData: string, message?: discord.Message): Promise<void>;
+    name: string
+    parent?: string
+    description: string
+    isEnabled: boolean
+    usage: IConsoleCommandUsage
+    process(consoleData: string, message?: discord.Message): Promise<void>
 }
 
-let tempCommands: Array<IConsoleCommand> = [];
+let tempCommands: Array<IConsoleCommand> = []
 
-let commandDir = fs.opendirSync(path.resolve("lib/consoleCommands/commandFiles"));
-let dirEntry = commandDir.readSync();
+let commandDir = fs.opendirSync(path.resolve("lib/consoleCommands/commandFiles"))
+let dirEntry = commandDir.readSync()
 while (dirEntry)
 {
-    let commandPath = path.resolve(commandDir.path, dirEntry.name);
+    let commandPath = path.resolve(commandDir.path, dirEntry.name)
     if (/.*\.js$/gi.test(commandPath))
     {
-        let command: IConsoleCommand = require(commandPath).command;
+        let command: IConsoleCommand = require(commandPath).command
         if (command && command.isEnabled)
         {
-            tempCommands.push(command);
+            tempCommands.push(command)
         }
     }
-    dirEntry = commandDir.readSync();
+    dirEntry = commandDir.readSync()
 }
-commandDir.closeSync();
+commandDir.closeSync()
 
-export var commands: Array<IConsoleCommand> = tempCommands;
+export var commands: Array<IConsoleCommand> = tempCommands
 
 export function findCommand(commandName: string): IConsoleCommand | undefined
 {
-    return commands.filter(command => command.name.toLowerCase() == commandName)[0];
+    return commands.filter(command => command.name.toLowerCase() == commandName)[0]
 }

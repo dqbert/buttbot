@@ -1,31 +1,31 @@
-import * as messaging from "@lib/messaging";
-import * as discord from "discord.js";
-import * as os from 'os';
-import * as typegoose from "@typegoose/typegoose";
-import * as logging from "@lib/logging";
-import { IMessageCommand, DiscordPermissionsEnum, CommandUsageError, IMessageCommandUsage } from "@messageCommands/MessageCommandUtilties";
-import { KeywordTypesEnum, Keyword } from "@entities/Keyword";
-import { Guild, GuildNotFoundError } from "@entities/Guild";
-import { MongoError } from "mongodb";
-import { CommandsError } from "@messageCommands/MessageCommandProcessor";
+import * as messaging from "@lib/messaging"
+import * as discord from "discord.js"
+import * as os from 'os'
+import * as typegoose from "@typegoose/typegoose"
+import * as logging from "@lib/logging"
+import { IMessageCommand, DiscordPermissionsEnum, CommandUsageError, IMessageCommandUsage } from "@messageCommands/MessageCommandUtilties"
+import { KeywordTypesEnum, Keyword } from "@entities/Keyword"
+import { Guild, GuildNotFoundError } from "@entities/Guild"
+import { MongoError } from "mongodb"
+import { CommandsError } from "@messageCommands/MessageCommandProcessor"
 
 interface ISubCommand
 {
-    [subCommand: string]: (message: discord.Message, splitMessage: RegExpMatchArray) => Promise<any>;
+    [subCommand: string]: (message: discord.Message, splitMessage: RegExpMatchArray) => Promise<any>
 }
 
 class CommandKeyword implements IMessageCommand
 {
-    name: string = "keyword";
-    description: string = "Manage buttbot keywords. Comes with 3 subcommands: add, list, and delete.";
-    isDefaultAdmin: boolean = false;
-    isEnabled: boolean = true;
+    name: string = "keyword"
+    description: string = "Manage buttbot keywords. Comes with 3 subcommands: add, list, and delete."
+    isDefaultAdmin: boolean = false
+    isEnabled: boolean = true
     permissions: DiscordPermissionsEnum[] =
     [
         DiscordPermissionsEnum.SEND_MESSAGES,
         DiscordPermissionsEnum.MANAGE_MESSAGES,
         DiscordPermissionsEnum.ADD_REACTIONS
-    ];
+    ]
     subcommands: ISubCommand =
     {
         "add": this.subCommandAdd.bind(this),
@@ -49,120 +49,120 @@ View all keywords or keywords which match the optionally specified keyword.`,
     {
         // Command format:
         // b/keyword (subCommand) "keywordName" keywordType keywordText
-        let splitMessage = message.content.match(/keyword (\w+)\s*(?:"(.+)")?\s*(\w+)?\s*(.*)?/);
+        let splitMessage = message.content.match(/keyword (\w+)\s*(?:"(.+)")?\s*(\w+)?\s*(.*)?/)
 
         if (!splitMessage)
         {
-            throw new CommandUsageError(this.usage.__main__);
+            throw new CommandUsageError(this.usage.__main__)
         }
 
-        let subCommand = this.subcommands[splitMessage[1].toLowerCase()];
+        let subCommand = this.subcommands[splitMessage[1].toLowerCase()]
 
         if (!subCommand)
         {
-            throw new CommandUsageError(this.usage.__main__);
+            throw new CommandUsageError(this.usage.__main__)
         }
 
-        await subCommand(message, splitMessage);
+        await subCommand(message, splitMessage)
     }
 
     private async subCommandAdd(message: discord.Message, splitMessage: RegExpMatchArray)
     {
         //            1        2            3           4
         // b/keyword add "keywordName" keywordType keywordText
-        let keyword = new Keyword();
-        keyword.name = this.getKeywordName(splitMessage, true);
+        let keyword = new Keyword()
+        keyword.name = this.getKeywordName(splitMessage, true)
 
         if (!keyword.name)
         {
-            throw new CommandUsageError(this.usage.add);
+            throw new CommandUsageError(this.usage.add)
         }
 
-        let keywordTypeString = splitMessage[3];
+        let keywordTypeString = splitMessage[3]
         if (!keywordTypeString)
         {
-            throw new CommandUsageError(this.usage.add);
+            throw new CommandUsageError(this.usage.add)
         }
 
-        keyword.type = KeywordTypesEnum[keywordTypeString.toUpperCase() as keyof typeof KeywordTypesEnum];
+        keyword.type = KeywordTypesEnum[keywordTypeString.toUpperCase() as keyof typeof KeywordTypesEnum]
 
         if (!keyword.type)
         {
-            throw new CommandsError(`Invalid keyword type "${keywordTypeString}". Valid types are: ${Object.keys(KeywordTypesEnum).join(", ").toLowerCase()}`);
+            throw new CommandsError(`Invalid keyword type "${keywordTypeString}". Valid types are: ${Object.keys(KeywordTypesEnum).join(", ").toLowerCase()}`)
         }
 
-        keyword.text = splitMessage[4];
+        keyword.text = splitMessage[4]
 
         if ([KeywordTypesEnum.KEEP, KeywordTypesEnum.EDIT].includes(keyword.type) && !keyword.text)
         {
-            throw new CommandsError(`Keyword type ${keywordTypeString} requires a response parameter (the third parameter to keyword add).`);
+            throw new CommandsError(`Keyword type ${keywordTypeString} requires a response parameter (the third parameter to keyword add).`)
         }
 
-        keyword.userID = message.author.id;
-        keyword.guildID = message.getButtbotGuild().id;
-        let guild = await typegoose.getModelForClass(Guild).findOne({id: message.getButtbotGuild().id});
+        keyword.userID = message.author.id
+        keyword.guildID = message.getButtbotGuild().id
+        let guild = await typegoose.getModelForClass(Guild).findOne({id: message.getButtbotGuild().id})
         if (!guild)
         {
-            throw new GuildNotFoundError(message.getButtbotGuild().id);
+            throw new GuildNotFoundError(message.getButtbotGuild().id)
         }
-        keyword.createHash();
+        keyword.createHash()
 
         try
         {
-            await typegoose.getModelForClass(Keyword).create(keyword);
+            await typegoose.getModelForClass(Keyword).create(keyword)
         }
         catch (err)
         {
             if (err instanceof MongoError && err.code == 11000)
             {
-                throw new CommandsError("Keyword not added: keyword defintion already exists!");
+                throw new CommandsError("Keyword not added: keyword defintion already exists!")
             }
             else
             {
-                logging.error(`Could not add keyword for subCommandAdd`, keyword);
-                throw err;
+                logging.error(`Could not add keyword for subCommandAdd`, keyword)
+                throw err
             }
         }
         await messaging.send(`Keyword added successfully!
-\`\`\`${keyword.toString()}\`\`\``, message.channel, message.author, message);
+\`\`\`${keyword.toString()}\`\`\``, message.channel, message.author, message)
     }
 
     private async subCommandList(message: discord.Message, splitMessage: RegExpMatchArray)
     {
         //             1           2
         // b/keyword list "keywordNameSearch"
-        let response = "";
-        let keywordName = this.getKeywordName(splitMessage);
+        let response = ""
+        let keywordName = this.getKeywordName(splitMessage)
 
         // Set default response (for keyword search failure)
         if (keywordName)
         {
-            response = `No keywords match your search: "${keywordName}"`;
+            response = `No keywords match your search: "${keywordName}"`
         }
         else
         {
-            keywordName = "";
-            response = "No keywords are defined for this server";
+            keywordName = ""
+            response = "No keywords are defined for this server"
         }
 
         // Get list of keywords matching our pattern
-        let keywords = await typegoose.getModelForClass(Keyword).find({guildID: message.getButtbotGuild().id});
-        let foundKeywords = keywords.filter(keyword => keyword.name && new RegExp(keywordName!, "gi").test(keyword.name));
+        let keywords = await typegoose.getModelForClass(Keyword).find({guildID: message.getButtbotGuild().id})
+        let foundKeywords = keywords.filter(keyword => keyword.name && new RegExp(keywordName!, "gi").test(keyword.name))
 
         if (foundKeywords.length == 0)
         {
-            await messaging.send(response, message.channel, message.author, message);
+            await messaging.send(response, message.channel, message.author, message)
         }
         else
         {
-            response = `Here is a list of keywords matching your search:${os.EOL}\`\`\``;
+            response = `Here is a list of keywords matching your search:${os.EOL}\`\`\``
 
             foundKeywords.forEach((keyword) => {
-                response += `${keyword.toString()}${os.EOL}`;
-            });
-            response += "```";
+                response += `${keyword.toString()}${os.EOL}`
+            })
+            response += "```"
 
-            await messaging.send(response, message.channel, message.author, message);
+            await messaging.send(response, message.channel, message.author, message)
         }
     }
 
@@ -170,64 +170,64 @@ View all keywords or keywords which match the optionally specified keyword.`,
     {
         //            1          2
         //b/keyword delete "keywordName"
-        let keywordName = this.getKeywordName(splitMessage);
+        let keywordName = this.getKeywordName(splitMessage)
 
         if (!keywordName)
         {
-            throw new CommandUsageError(this.usage.delete);
+            throw new CommandUsageError(this.usage.delete)
         }
 
-        let keywords = await typegoose.getModelForClass(Keyword).find({guildID: message.getButtbotGuild().id});
-        let deletedKeywords = keywords.filter(keyword => keyword.name?.toLowerCase() == keywordName);
+        let keywords = await typegoose.getModelForClass(Keyword).find({guildID: message.getButtbotGuild().id})
+        let deletedKeywords = keywords.filter(keyword => keyword.name?.toLowerCase() == keywordName)
 
         if (deletedKeywords.length > 0)
         {
-            let response = `Keywords deleted successfully!${os.EOL}\`\`\``;
+            let response = `Keywords deleted successfully!${os.EOL}\`\`\``
 
             deletedKeywords.forEach(keyword =>
             {
-                response += `${keyword.toString()}${os.EOL}`;
-            });
+                response += `${keyword.toString()}${os.EOL}`
+            })
 
-            response += "```";
+            response += "```"
 
-            let deletePromises: Promise<any>[] = [];
+            let deletePromises: Promise<any>[] = []
             try
             {
-                deletedKeywords.forEach(keyword => deletePromises.push(keyword.remove()));
-                await Promise.all(deletePromises);
+                deletedKeywords.forEach(keyword => deletePromises.push(keyword.remove()))
+                await Promise.all(deletePromises)
             }
             catch (err)
             {
-                logging.error(`Could not delete keywords for subCommandDelete`, deletedKeywords, deletePromises);
-                throw err;
+                logging.error(`Could not delete keywords for subCommandDelete`, deletedKeywords, deletePromises)
+                throw err
             }
 
-            await messaging.send(response, message.channel, message.author, message);
+            await messaging.send(response, message.channel, message.author, message)
         }
         else
         {
-            throw new CommandsError(`No keywords were removed matching search: "${keywordName}"`);
+            throw new CommandsError(`No keywords were removed matching search: "${keywordName}"`)
         }
     }
 
     private getKeywordName(splitMessage: RegExpMatchArray, requiresQuotes?: boolean): string | undefined
     {
-        let result = splitMessage[2];
+        let result = splitMessage[2]
         if (!requiresQuotes && !result)
         {
-            result = splitMessage[3];
+            result = splitMessage[3]
             if (result)
             {
-                result += (splitMessage[4] ? ` ${splitMessage[4]}` : "");
+                result += (splitMessage[4] ? ` ${splitMessage[4]}` : "")
             }
             else
             {
-                result = splitMessage[4];
+                result = splitMessage[4]
             }
         }
-        return result?.toLowerCase();
+        return result?.toLowerCase()
     }
 }
 
-export const command = new CommandKeyword();
+export const command = new CommandKeyword()

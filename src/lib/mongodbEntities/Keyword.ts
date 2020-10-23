@@ -1,7 +1,7 @@
-import {prop, index} from "@typegoose/typegoose";
-import * as discord from "discord.js";
-import { MongoEntity } from "@entities/MongoEntity";
-import * as crypto from "crypto";
+import {prop, index} from "@typegoose/typegoose"
+import * as discord from "discord.js"
+import { MongoEntity } from "@entities/MongoEntity"
+import * as crypto from "crypto"
 
 export enum KeywordTypesEnum
 {
@@ -15,35 +15,35 @@ export enum KeywordTypesEnum
 export class Keyword extends MongoEntity
 {
     @prop({required: true})
-    name?: string;
+    name?: string
 
     @prop({required: true})
-    guildID?: discord.Snowflake;
+    guildID?: discord.Snowflake
 
     @prop({ enum: KeywordTypesEnum, required: true })
-    type?: KeywordTypesEnum;
+    type?: KeywordTypesEnum
 
     @prop()
-    text?: string;
+    text?: string
 
     @prop()
-    commandName?: string;
+    commandName?: string
 
     @prop()
-    userID?: discord.Snowflake;
+    userID?: discord.Snowflake
 
     @prop({required: true, unique: true})
-    keywordHash?: string;
+    keywordHash?: string
 
     toString()
     {
-        return `${this.name} [${this.type}]${this.text ? `: ${this.text}` : ""}`;
+        return `${this.name} [${this.type}]${this.text ? `: ${this.text}` : ""}`
     }
 
     createHash()
     {
-        let newHash = crypto.createHash("sha256");
-        newHash.update(`${this.name}${this.type}${this.text}`);
-        this.keywordHash = newHash.digest('hex');
+        let newHash = crypto.createHash("sha256")
+        newHash.update(`${this.name}${this.type}${this.text}`)
+        this.keywordHash = newHash.digest('hex')
     }
 }

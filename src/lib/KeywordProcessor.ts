@@ -8,44 +8,47 @@ import "@lib/discordOverrides"
 import { Guild } from "@entities/Guild"
 import { KeywordTypesEnum, Keyword } from "@entities/Keyword"
 
+// 1 hour in ms
+const AWAIT_REACTION_IDLE = 60*60*1000
+
 /**
- * JSON object holding original versions of edited messages.
+ * Map holding original versions of edited messages.
  */
-interface IEditSwap
-{
-    [messageID: string]: string
+type MessageId = string
+interface IEditSwap {
+    originalContent: string,
+    embed: discord.MessageEmbed
 }
-var editSwap: IEditSwap = {}
+var editSwap = new Map<MessageId, IEditSwap>()
 
 async function individualReactionHandler(message: discord.Message, reaction: discord.MessageReaction)
 {
     await reaction.remove()
-    if (message.content)
+    if (editSwap.has(message.id))
     {
-        await message.edit(editSwap[message.id])
-    }
-    else
-    {
-        await message.edit("")
+        let swap = editSwap.get(message.id)
+        if (swap)
+        {
+            let newEmbed = swap.embed.setFooter("")
+            await message.edit(newEmbed)
+            await message.edit(swap.originalContent)
+            editSwap.delete(message.id)
+        }
+        else
+        {
+            throw new ReferenceError("editSwap did not have entry for message" + message.toString())
+        }
     }
 }
 
 async function messageReactionHandler(message: discord.Message)
 {
-    while (!message.deleted)
+    // Watch this message to allow for reaction toggle
+    let reactions = await message.awaitReactions((reaction: discord.MessageReaction, user: discord.User) =>
     {
-        // Watch this message to allow for reaction toggle
-        let reactions = await message.awaitReactions((reaction, user) =>
-        {
-            return (reaction.emoji.name == "🔁" && user.id != constants.bot.user?.id)
-        })
-        let reactionPromises: Array<Promise<void>> = []
-        reactions.forEach(async (reaction) => {
-            reactionPromises.push(individualReactionHandler(message, reaction))
-        })
-
-        Promise.all(reactionPromises)
-    }
+        return (reaction.emoji.name == "🔁" && !user.bot)
+    }, {max: 1, idle: AWAIT_REACTION_IDLE})
+    await Promise.all(reactions.map((reaction) => individualReactionHandler(message, reaction)))
 }
 
 export async function process(message: discord.Message)
@@ -57,10 +60,6 @@ export async function process(message: discord.Message)
         let keywords = await typegoose.getModelForClass(Keyword).find({guildID: guild.id})
         if (keywords)
         {
-            let embed = new discord.MessageEmbed()
-            .setColor(message.member.displayColor)
-            .setAuthor(message.member.displayName, message.member.user.displayAvatarURL())
-            .setFooter("Click the 🔁 to retrieve your original message")
             let editMessage = ""
             let deleteMessage = false
             let sendMessages: string[] = []
@@ -97,6 +96,7 @@ export async function process(message: discord.Message)
 
                     // These keyword_types require deletion of message
                     // Don't delete a message with a URL in it
+                    // Don't delete a message with attachments
                     if ([KeywordTypesEnum.DELETE, KeywordTypesEnum.EDIT].includes(keyword.type) && !/http.?:/gi.test(message.content) && message.attachments.size == 0)
                     {
                         deleteMessage = true
@@ -113,14 +113,32 @@ export async function process(message: discord.Message)
             // If we are going to edit the message, send the embed
             if (editMessage != "")
             {
-                embed.setDescription(editMessage)
-                (await messaging.send(embed, message.channel)).forEach((editedMessage) =>
+                let embed = new discord.MessageEmbed(
                 {
-                    editSwap[editedMessage.id] = message.content
+                    color: message.member.displayColor,
+                    author:
+                    {
+                        name: message.member.displayName,
+                        iconURL: message.member.user.displayAvatarURL()
+                    },
+                    footer:
+                    {
+                        text: "Click the 🔁 to retrieve your original message"
+                    },
+                    description: editMessage
+                })
+                let messages = await messaging.send(embed, message.channel)
+                await Promise.all(messages.map(async (editedMessage: discord.Message) =>
+                {
+                    editSwap.set(editedMessage.id, 
+                    {
+                        originalContent: message.content,
+                        embed: embed
+                    })
                     // React so others can add to the reaction
                     try
                     {
-                        editedMessage.react("🔁")
+                        await editedMessage.react("🔁")
                         messageReactionHandler(editedMessage)
                     }
                     catch (err)
@@ -128,7 +146,7 @@ export async function process(message: discord.Message)
                         logging.log("Couldn't react to an edit message!")
                         throw err
                     }
-                })
+                }))
             }
 
             // If we have to delete the user's message, then delete it

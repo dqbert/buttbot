@@ -72,8 +72,9 @@ export async function logUsage(message: discord.Message, replyTo?: discord.Messa
         usage.commandName = command?.name
         usage.date = message.createdAt
         usage.messageID = message.id
-        usage.replyTo = guildEntity.usages.find(findUsage => findUsage.messageID == replyTo)?._id;
+        usage.replyTo = guildEntity.usages.find(findUsage => findUsage.messageID == replyTo)?._id
         usage.userID = message.author.id
+        guildEntity.usages.push(usage)
         try
         {
             await guildEntity.save()

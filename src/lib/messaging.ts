@@ -20,8 +20,16 @@ export async function send(message: string | discord.MessageEmbed, channel: disc
     {
         while (messageString.length > 0 || messageEmbed)
         {
-            let sentMessage = await channel.send(messageString.substring(0, 1999), messageEmbed)
-            messageEmbed = undefined
+            let sentMessage: discord.Message
+            if (messageEmbed)
+            {
+                sentMessage = await channel.send(messageString.substring(0, 1999), messageEmbed)
+                messageEmbed = undefined
+            }
+            else
+            {
+                sentMessage = await channel.send(messageString.substring(0, 1999))
+            }
             sentMessages.push(sentMessage)
             messageString = messageString.substring(1999)
             // If there's a user, log this message for that user

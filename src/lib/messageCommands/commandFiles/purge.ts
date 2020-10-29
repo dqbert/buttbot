@@ -24,6 +24,11 @@ class PurgeCommand implements IMessageCommand
             throw new CommandUsageError(this.usage.__main__)
         }
 
+        if (message.channel instanceof discord.DMChannel)
+        {
+            throw new CommandsError(`This command can not be run from a direct message.`)
+        }
+
         let deletions = parseInt(splitMessage[1])
         if (isNaN(deletions) || deletions < 1)
         {

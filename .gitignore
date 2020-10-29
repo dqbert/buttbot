@@ -71,3 +71,4 @@ sql presets/
 test_sql.js
 dist/
 test.ts
+ignore/
